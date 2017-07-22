@@ -84,6 +84,7 @@ _uplo_conversion = {}
 _vec_conversion = {}
 _side_conversion = {}
 _trans_conversion = {}
+_diag_conversion = {}
 
 _libmagma.magma_vec_const.restype = ctypes.c_longlong
 _libmagma.magma_vec_const.argtypes = [ctypes.c_char]
@@ -93,6 +94,8 @@ _libmagma.magma_side_const.restype = ctypes.c_longlong
 _libmagma.magma_side_const.argtypes = [ctypes.c_char]
 _libmagma.magma_trans_const.restype = ctypes.c_longlong
 _libmagma.magma_trans_const.argtypes = [ctypes.c_char]
+_libmagma.magma_diag_const.restype = ctypes.c_longlong
+_libmagma.magma_diag_const.argtypes = [ctypes.c_char]
 
 _libmagma.magma_init.restype = int
 def magma_init():
@@ -114,6 +117,9 @@ def magma_init():
             _side_conversion.update({c: _libmagma.magma_side_const(c)})
         for c in [b'n', b'N', b't', b'T', b'c', b'C']:
             _trans_conversion.update({c: _libmagma.magma_trans_const(c)})
+        for c in [b'N', b'n', b'U', b'u']:
+            _diag_conversion.update({c: _libmagma.magma_diag_const(c)})
+
     else:
         for c in ['l', 'L', 'u', 'U']:
             _uplo_conversion.update({c: c})
@@ -123,6 +129,8 @@ def magma_init():
             _sides_conversion.update({c: c})
         for c in ['n', 'N', 't', 'T', 'c', 'C']:
             _trans_conversion.update({c:c})
+        for c in ['n', 'N', 'u', 'U']:
+            _diag_conversion.update({c:c})
 
 _libmagma.magma_finalize.restype = int
 def magma_finalize():
@@ -1757,6 +1765,63 @@ def magma_sormqr_m(ngpu, side, trans, m, n, k, A, lda,
     side = _side_conversion[side]
     trans = _trans_conversion[trans]
     status = _libmagma.magma_sormqr_m(ngpu, side, trans, m, n, k,
+                                      int(A), lda, int(tau),
+                                      int(C), ldc, int(work), lwork,
+                                      ctypes.byref(info))
+
+_libmagma.magma_strsm_m.restype = int
+_libmagma.magma_strsm_m.argtypes = [ctypes.c_longlong,
+                                    ctypes.c_longlong,
+                                    ctypes.c_longlong,
+                                    ctypes.c_longlong,
+                                    ctypes.c_longlong,
+                                    ctypes.c_longlong,
+                                    ctypes.c_longlong,
+                                    ctypes.c_float,
+                                    ctypes.c_void_p,
+                                    ctypes.c_longlong,
+                                    ctypes.c_void_p,
+                                    ctypes.c_longlong,
+                                    ctypes.c_void_p]
+def magma_strsm_m(ngpu, side, uplo, trans, diag, m, n, alpha, A, lda, B, ldb):
+    """
+        Solve triangular Linear equations (multiple gpu,
+        GPU memory is allocated in the routine).
+        """
+    info = ctypes.c_longlong()
+    side = _side_conversion[side]
+    trans = _trans_conversion[trans]
+    uplo = _uplo_conversion[uplo]
+    diag = _diag_conversion[diag]
+    status = _libmagma.magma_strsm_m(ngpu, side, uplo, trans,
+                                     diag, m, n, alpha, int(A),
+                                     lda, int(B), ldb,
+                                     ctypes.byref(info))
+
+_libmagma.magma_sormqr.restype = int
+_libmagma.magma_sormqr.argtypes = [ctypes.c_longlong,
+                                    ctypes.c_longlong,
+                                    ctypes.c_longlong,
+                                    ctypes.c_longlong,
+                                    ctypes.c_longlong,
+                                    ctypes.c_void_p,
+                                    ctypes.c_longlong,
+                                    ctypes.c_void_p,
+                                    ctypes.c_void_p,
+                                    ctypes.c_longlong,
+                                    ctypes.c_void_p,
+                                    ctypes.c_longlong,
+                                    ctypes.c_void_p]
+def magma_sormqr(side, trans, m, n, k, A, lda,
+                   tau, C, ldc, work, lwork):
+    """
+        Multiply by Q from QR factorizatioin (multiple gpu,
+        GPU memory is allocated in the routine).
+        """
+    info = ctypes.c_longlong()
+    side = _side_conversion[side]
+    trans = _trans_conversion[trans]
+    status = _libmagma.magma_sormqr(side, trans, m, n, k,
                                       int(A), lda, int(tau),
                                       int(C), ldc, int(work), lwork,
                                       ctypes.byref(info))
