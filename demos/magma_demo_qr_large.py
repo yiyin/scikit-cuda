@@ -4,6 +4,7 @@
 Demo of how to call low-level MAGMA wrappers to perform QR decomposition.
 """
 
+from ypcutil.importcuda import *
 import numpy as np
 import pycuda.driver as cuda
 import skcuda.magma as magma
