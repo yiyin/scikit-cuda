@@ -7,6 +7,7 @@ Note: this module does not explicitly depend on PyCUDA.
 """
 
 import ctypes
+import numpy as np
 
 from cublas import cublasCheckStatus, _libcublas, _CUBLAS_OP
 from . import cuda
@@ -49,25 +50,25 @@ _libcublas.cublasXtGetNumBoards.argtypes = [ctypes.c_int,
                                             ctypes.c_void_p,
                                             ctypes.c_void_p]
 def cublasXtGetNumBoards(handle, deviceId):
-    nbBoards = ctypes.c_int()
-    status = _libcublas.cublasXtGetNumBoards(handle, deviceId, ctypes.byref(nbBoards))
+    nbBoards = np.empty(1, np.int32)
+    status = _libcublas.cublasXtGetNumBoards(handle, int(deviceId), int(nbBoards.ctypes.data))
     cublasCheckStatus(status)
-    return nbBoards.value
+    return nbBoards[0]
 
 _libcublas.cublasXtMaxBoards.restype = int
 _libcublas.cublasXtMaxBoards.argtypes = [ctypes.c_void_p]
 def cublasXtMaxBoards():
-    nbGpuBoards = ctypes.c_int()
-    status = _libcublas.cublasXtMaxBoards(ctypes.byref(nbGpuBoards))
+    nbGpuBoards = np.empty(1, np.int32)
+    status = _libcublas.cublasXtMaxBoards(int(nbGpuBoards.ctypes.data))
     cublasCheckStatus(status)
-    return nbGpuBoards.value
+    return nbGpuBoards[0]
 
 _libcublas.cublasXtDeviceSelect.restype = int
 _libcublas.cublasXtDeviceSelect.argtypes = [ctypes.c_int,
                                             ctypes.c_int,
                                             ctypes.c_void_p]
 def cublasXtDeviceSelect(handle, nbDevices, deviceId):
-    status = _libcublas.cublasXtDeviceSelect(handle, nbDevices, deviceId)
+    status = _libcublas.cublasXtDeviceSelect(handle, nbDevices, int(deviceId))
     cublasCheckStatus(status)
 
 _libcublas.cublasXtSetBlockDim.restype = int
@@ -81,10 +82,10 @@ _libcublas.cublasXtGetBlockDim.restype = int
 _libcublas.cublasXtGetBlockDim.argtypes = [ctypes.c_int,
                                            ctypes.c_int]
 def cublasXtGetBlockDim(handle):
-    blockDim = ctypes.c_void_p()
-    status = _libcublas.cublasXtSetBlockDim(handle, ctypes.byref(blockDim))
+    blockDim = np.empty(1, np.int32)
+    status = _libcublas.cublasXtSetBlockDim(handle, int(blockDim.ctypes.data))
     cublasCheckStatus(status)
-    return blockDim.value
+    return blockDim[0]
 
 _libcublas.cublasXtSetCpuRoutine.restype = int
 _libcublas.cublasXtSetCpuRoutine.argtypes = [ctypes.c_int,
